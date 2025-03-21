@@ -6,10 +6,6 @@ type Canvas struct {
 	pixels []byte
 }
 
-func Serialize(canvas Canvas) []byte {
-
-}
-
 /*
 Serialized Format:
 | 12 bit | 12 bit | 3 bit | <- multiply color by the number of pixels.
@@ -26,8 +22,8 @@ Color Values:
 111 : White - #FFFFFF
 */
 func Deserialize(data []byte) Canvas {
-	var width uint = (uint(data[0]) << 4) | uint(data[1]>>4)
-	var height uint = (uint(data[1]&0x0F) << 8) | uint(data[2])
+	var height uint = (uint(data[0]) << 4) | uint(data[1]>>4)
+	var width uint = (uint(data[1]&0x0F) << 8) | uint(data[2])
 	var pixels []byte = make([]byte, height*width)
 
 	var bitCount uint = width * height * 3
@@ -39,6 +35,14 @@ func Deserialize(data []byte) Canvas {
 	}
 
 	return Canvas{width: width, height: height, pixels: pixels}
+}
+
+func Serialize(canvas Canvas) []byte {
+	var bitsNeeded = canvas.height*canvas.width*3 + 24
+	var output []byte = make([]byte, (bitsNeeded+7)/8)
+	output[0] = byte(canvas.height >> 4)
+	output[1] = byte(canvas.height&0b00001111)<<4 | byte(canvas.width>>4)
+	output[2] = byte(canvas.width&0b00001111) << 4
 }
 
 func (canvas *Canvas) Clear() {
