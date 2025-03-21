@@ -106,7 +106,8 @@ func DeltaSerialize(changes []CanvasDelta) []byte {
 }
 
 func PackDelta(buff *[]byte, byteN int, bitN int, delta CanvasDelta) (int, int) {
-	//This seems quite inefficient
+	//This seems quite inefficient. Perhaps can get the next x bits where
+	// x is the min of bits left in byte and number of bits left in x/y/color in the delta
 	for i := 0; i < 12; i++ {
 		(*buff)[byteN] = (*buff)[byteN]<<1 | byte(delta.y>>(11-i))
 		Increment(&byteN, &bitN)
@@ -122,6 +123,31 @@ func PackDelta(buff *[]byte, byteN int, bitN int, delta CanvasDelta) (int, int) 
 	return byteN, bitN
 }
 
-func DeltaDeSerialize(changes []byte) []CanvasDelta {
-
+func DeltaDeserialize(changes []byte) []CanvasDelta {
+	var numChanges int = int(changes[0])<<16 | int(changes[1])<<8 | int(changes[2])
+	var output []CanvasDelta = make([]CanvasDelta, numChanges)
+	var byteN int = 3
+	var bitN int = 0
+	for i := 0; i < numChanges; i++ {
+		output[i] = deltaDeseralizeSingle(changes, &byteN, &bitN)
+	}
+	return output
+}
+func deltaDeseralizeSingle(changes []byte, byteN *int, bitN *int) CanvasDelta {
+	var delta = CanvasDelta{}
+	for i := 0; i < 12; i++ {
+		delta.y <<= 1
+		delta.y |= uint(changes[*byteN]>>7 - byte(*bitN))
+		Increment(byteN, bitN)
+	}
+	for i := 0; i < 12; i++ {
+		delta.x <<= 1
+		delta.x |= uint(changes[*byteN]>>7 - byte(*bitN))
+		Increment(byteN, bitN)
+	}
+	for i := 0; i < 3; i++ {
+		delta.color <<= 1
+		delta.color |= changes[*byteN]>>7 - byte(*bitN)
+		Increment(byteN, bitN)
+	}
 }
