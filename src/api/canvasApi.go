@@ -43,6 +43,10 @@ func Serialize(canvas Canvas) []byte {
 	output[0] = byte(canvas.height >> 4)
 	output[1] = byte(canvas.height&0b00001111)<<4 | byte(canvas.width>>4)
 	output[2] = byte(canvas.width&0b00001111) << 4
+	//for each pixel add 3 bit color code
+	for i := 0; i < len(canvas.pixels); i++ {
+
+	}
 }
 
 func (canvas *Canvas) Clear() {
