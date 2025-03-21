@@ -37,6 +37,13 @@ func Deserialize(data []byte) Canvas {
 	return Canvas{width: width, height: height, pixels: pixels}
 }
 
+func Increment(byteN *int, bitN *int) {
+	*bitN += 1
+	if *bitN == 8 {
+		*byteN += 1
+		*bitN = 0
+	}
+}
 func Serialize(canvas Canvas) []byte {
 	var bitsNeeded = canvas.height*canvas.width*3 + 24
 	var output []byte = make([]byte, (bitsNeeded+7)/8)
@@ -44,9 +51,17 @@ func Serialize(canvas Canvas) []byte {
 	output[1] = byte(canvas.height&0b00001111)<<4 | byte(canvas.width>>4)
 	output[2] = byte(canvas.width&0b00001111) << 4
 	//for each pixel add 3 bit color code
+	var byteN = 3 // start at 3 to account for size header
+	var bitN = 0
 	for i := 0; i < len(canvas.pixels); i++ {
-
+		output[byteN] = (output[byteN] << 1) | (canvas.pixels[i] >> 2)
+		Increment(&byteN, &bitN)
+		output[byteN] = (output[byteN] << 1) | (canvas.pixels[i] >> 1)
+		Increment(&byteN, &bitN)
+		output[byteN] = (output[byteN] << 1) | (canvas.pixels[i])
+		Increment(&byteN, &bitN)
 	}
+	return output
 }
 
 func (canvas *Canvas) Clear() {
