@@ -37,13 +37,6 @@ func Deserialize(data []byte) Canvas {
 	return Canvas{width: width, height: height, pixels: pixels}
 }
 
-func Increment(byteN *int, bitN *int) {
-	*bitN += 1
-	if *bitN == 8 {
-		*byteN += 1
-		*bitN = 0
-	}
-}
 func Serialize(canvas Canvas) []byte {
 	var bitsNeeded = canvas.height*canvas.width*3 + 24
 	var output []byte = make([]byte, (bitsNeeded+7)/8)
@@ -64,14 +57,69 @@ func Serialize(canvas Canvas) []byte {
 	return output
 }
 
+func Increment(byteN *int, bitN *int) {
+	*bitN += 1
+	if *bitN == 8 {
+		*byteN += 1
+		*bitN = 0
+	}
+}
+
 type CanvasDelta struct {
 	x     uint
 	y     uint
 	color byte
 }
 
-func DeltaSerialize(changes []CanvasDelta) []byte {
+/*
+Serialized Format:
+Header:
+|     24 bit      |
+|Number of deltas |
+For each delta
+| 12 bit | 12 bit | 3 bit | -> 27 bit per delta
+|    y   |    x   | color |
 
+Color Values:
+000 : Red - #FF0000
+001 : Orange - #FFA500
+010 : Yellow - #FFFF00
+011 : Green - #008000
+100 : Blue - #0000FF
+101 : Purple - #800080
+110 : Pink - #FFC0CB
+111 : White - #FFFFFF
+*/
+
+func DeltaSerialize(changes []CanvasDelta) []byte {
+	var output []byte = make([]byte, 3+(27*len(changes)+7)/8)
+	var numChanges int = len(changes)
+	output[0] = byte(numChanges >> 16)
+	output[1] = byte(numChanges >> 8)
+	output[2] = byte(numChanges)
+	var byteN int = 3
+	var bitN int = 0
+	for i := 0; i < numChanges; i++ {
+		byteN, bitN = PackDelta(&output, byteN, bitN, changes[i])
+	}
+	return output
+}
+
+func PackDelta(buff *[]byte, byteN int, bitN int, delta CanvasDelta) (int, int) {
+	//This seems quite inefficient
+	for i := 0; i < 12; i++ {
+		(*buff)[byteN] = (*buff)[byteN]<<1 | byte(delta.y>>(11-i))
+		Increment(&byteN, &bitN)
+	}
+	for i := 0; i < 12; i++ {
+		(*buff)[byteN] = (*buff)[byteN]<<1 | byte(delta.x>>(11-i))
+		Increment(&byteN, &bitN)
+	}
+	for i := 0; i < 3; i++ {
+		(*buff)[byteN] = (*buff)[byteN]<<1 | byte(delta.color>>(2-i))
+		Increment(&byteN, &bitN)
+	}
+	return byteN, bitN
 }
 
 func DeltaDeSerialize(changes []byte) []CanvasDelta {
