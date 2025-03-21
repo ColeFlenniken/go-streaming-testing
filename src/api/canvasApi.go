@@ -64,6 +64,16 @@ func Serialize(canvas Canvas) []byte {
 	return output
 }
 
-func (canvas *Canvas) Clear() {
+type CanvasDelta struct {
+	x     uint
+	y     uint
+	color byte
+}
+
+func DeltaSerialize(changes []CanvasDelta) []byte {
+
+}
+
+func DeltaDeSerialize(changes []byte) []CanvasDelta {
 
 }
