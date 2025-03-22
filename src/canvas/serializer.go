@@ -1,10 +1,5 @@
 package canvas
 
-type Canvas struct {
-	Width  uint
-	Height uint
-	Pixels []byte
-}
 type BitCursor struct {
 	byteN int
 	bitN  int

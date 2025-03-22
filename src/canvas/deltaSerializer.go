@@ -1,11 +1,5 @@
 package canvas
 
-type CanvasDelta struct {
-	X     uint
-	Y     uint
-	Color byte
-}
-
 func DeltaDeserialize(changes []byte) []CanvasDelta {
 	var numChanges int = int(changes[0])<<16 | int(changes[1])<<8 | int(changes[2])
 	var output []CanvasDelta = make([]CanvasDelta, numChanges)
