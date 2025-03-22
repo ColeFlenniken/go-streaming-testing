@@ -85,6 +85,8 @@ func PackDelta(buff []byte, place *BitCursor, delta CanvasDelta) {
 		buff[place.byteN] = buff[place.byteN]<<1 | (byte(delta.Color>>(2-i)) & 1)
 		place.Increment()
 	}
-	buff[len(buff)-1] <<= 8 - byte(place.bitN)
+	if place.bitN != 0 {
+		buff[len(buff)-1] <<= 8 - byte(place.bitN)
+	}
 
 }

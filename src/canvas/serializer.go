@@ -69,6 +69,9 @@ func Serialize(canvas Canvas) []byte {
 		place.Increment()
 	}
 	//needed to shift the bits in the last byte to the left if not all bits are used
-	output[len(output)-1] <<= 8 - byte(place.bitN)
+	if place.bitN != 0 {
+		output[len(output)-1] <<= (8 - byte(place.bitN))
+	}
+
 	return output
 }
