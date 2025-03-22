@@ -7,7 +7,7 @@ import (
 	"github.com/go-streaming-testing/src/canvas"
 )
 
-func TestAdd(t *testing.T) {
+func TestSimpleSerialize(t *testing.T) {
 	var cv canvas.Canvas = canvas.Canvas{
 		Width:  2,
 		Height: 2,

@@ -6,24 +6,6 @@ type CanvasDelta struct {
 	Color byte
 }
 
-func PackDelta(buff []byte, place *BitCursor, delta CanvasDelta) {
-	//This seems quite inefficient. Perhaps can get the next x bits where
-	// x is the min of bits left in byte and number of bits left in x/y/color in the delta
-	for i := 0; i < 12; i++ {
-		buff[place.byteN] = buff[place.byteN]<<1 | byte(delta.Y>>(11-i))
-		place.Increment()
-	}
-	for i := 0; i < 12; i++ {
-		buff[place.byteN] = buff[place.byteN]<<1 | byte(delta.X>>(11-i))
-		place.Increment()
-	}
-	for i := 0; i < 3; i++ {
-		buff[place.byteN] = buff[place.byteN]<<1 | byte(delta.Color>>(2-i))
-		place.Increment()
-	}
-
-}
-
 func DeltaDeserialize(changes []byte) []CanvasDelta {
 	var numChanges int = int(changes[0])<<16 | int(changes[1])<<8 | int(changes[2])
 	var output []CanvasDelta = make([]CanvasDelta, numChanges)
@@ -38,19 +20,21 @@ func deltaDeseralizeSingle(changes []byte, place *BitCursor) CanvasDelta {
 	var delta = CanvasDelta{}
 	for i := 0; i < 12; i++ {
 		delta.Y <<= 1
-		delta.Y |= uint(changes[place.byteN] >> (7 - byte(place.bitN)))
+		delta.Y |= uint(changes[place.byteN]>>(7-byte(place.bitN))) & 1
 		place.Increment()
 	}
 	for i := 0; i < 12; i++ {
 		delta.X <<= 1
-		delta.X |= uint(changes[place.byteN] >> (7 - byte(place.bitN)))
+		delta.X |= uint(changes[place.byteN]>>(7-byte(place.bitN))) & 1
 		place.Increment()
 	}
+
 	for i := 0; i < 3; i++ {
 		delta.Color <<= 1
-		delta.Color |= changes[place.byteN]>>7 - byte(place.bitN)
+		delta.Color |= (changes[place.byteN] >> (7 - byte(place.bitN))) & 1
 		place.Increment()
 	}
+
 	return delta
 }
 
@@ -85,4 +69,22 @@ func DeltaSerialize(changes []CanvasDelta) []byte {
 		PackDelta(output, &place, changes[i])
 	}
 	return output
+}
+func PackDelta(buff []byte, place *BitCursor, delta CanvasDelta) {
+	//This seems quite inefficient. Perhaps can get the next x bits where
+	// x is the min of bits left in byte and number of bits left in x/y/color in the delta
+	for i := 0; i < 12; i++ {
+		buff[place.byteN] = buff[place.byteN]<<1 | (byte(delta.Y>>(11-i)) & 1)
+		place.Increment()
+	}
+	for i := 0; i < 12; i++ {
+		buff[place.byteN] = buff[place.byteN]<<1 | (byte(delta.X>>(11-i)) & 1)
+		place.Increment()
+	}
+	for i := 0; i < 3; i++ {
+		buff[place.byteN] = buff[place.byteN]<<1 | (byte(delta.Color>>(2-i)) & 1)
+		place.Increment()
+	}
+	buff[len(buff)-1] <<= 8 - byte(place.bitN)
+
 }

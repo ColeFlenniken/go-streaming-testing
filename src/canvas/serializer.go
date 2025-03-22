@@ -33,6 +33,7 @@ Color Values:
 110 : Pink - #FFC0CB
 111 : White - #FFFFFF
 */
+//Need to look into if reversing bit order in bytes can cause a speedup
 func Deserialize(data []byte) Canvas {
 	var height uint = (uint(data[0]) << 4) | uint(data[1]>>4)
 	var width uint = (uint(data[1]&0x0F) << 8) | uint(data[2])
