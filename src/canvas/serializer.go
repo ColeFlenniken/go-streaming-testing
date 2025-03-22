@@ -38,12 +38,14 @@ func Deserialize(data []byte) Canvas {
 	var width uint = (uint(data[1]&0x0F) << 8) | uint(data[2])
 	var pixels []byte = make([]byte, height*width)
 	//fmt.Println("width: " + fmt.Sprint(width) + " " + "height:  " + fmt.Sprint(height))
-	var bitCount uint = width * height * 3
-
-	for i := uint(0); i < bitCount; i += 3 {
-		pixels[i/3] = ((data[(i+24)/8]>>(i%8))&1)<<2 |
-			((data[(i+24+1)/8]>>((i+1)%8))&1)<<1 |
-			(data[(i+24+2)/8]>>((i+2)%8))&1
+	var place BitCursor = BitCursor{byteN: 3, bitN: 0}
+	for i := 0; i < len(pixels); i++ {
+		pixels[i] = (data[place.byteN] >> (7 - place.bitN)) & 1 << 2
+		place.Increment()
+		pixels[i] |= (data[place.byteN] >> (7 - place.bitN)) & 1 << 1
+		place.Increment()
+		pixels[i] |= (data[place.byteN] >> (7 - place.bitN)) & 1
+		place.Increment()
 	}
 
 	return Canvas{Width: width, Height: height, Pixels: pixels}
@@ -60,10 +62,12 @@ func Serialize(canvas Canvas) []byte {
 	for i := 0; i < len(canvas.Pixels); i++ {
 		output[place.byteN] = (output[place.byteN] << 1) | (canvas.Pixels[i] >> 2)
 		place.Increment()
-		output[place.byteN] = (output[place.byteN] << 1) | (canvas.Pixels[i] >> 1)
+		output[place.byteN] = (output[place.byteN] << 1) | (canvas.Pixels[i]>>1)&1
 		place.Increment()
-		output[place.byteN] = (output[place.byteN] << 1) | (canvas.Pixels[i])
+		output[place.byteN] = (output[place.byteN] << 1) | (canvas.Pixels[i])&1
 		place.Increment()
 	}
+	//needed to shift the bits in the last byte to the left if not all bits are used
+	output[len(output)-1] <<= 8 - byte(place.bitN)
 	return output
 }
