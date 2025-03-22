@@ -1,24 +1,24 @@
 package canvas
 
 type CanvasDelta struct {
-	x     uint
-	y     uint
-	color byte
+	X     uint
+	Y     uint
+	Color byte
 }
 
 func PackDelta(buff []byte, place *BitCursor, delta CanvasDelta) {
 	//This seems quite inefficient. Perhaps can get the next x bits where
 	// x is the min of bits left in byte and number of bits left in x/y/color in the delta
 	for i := 0; i < 12; i++ {
-		buff[place.byteN] = buff[place.byteN]<<1 | byte(delta.y>>(11-i))
+		buff[place.byteN] = buff[place.byteN]<<1 | byte(delta.Y>>(11-i))
 		place.Increment()
 	}
 	for i := 0; i < 12; i++ {
-		buff[place.byteN] = buff[place.byteN]<<1 | byte(delta.x>>(11-i))
+		buff[place.byteN] = buff[place.byteN]<<1 | byte(delta.X>>(11-i))
 		place.Increment()
 	}
 	for i := 0; i < 3; i++ {
-		buff[place.byteN] = buff[place.byteN]<<1 | byte(delta.color>>(2-i))
+		buff[place.byteN] = buff[place.byteN]<<1 | byte(delta.Color>>(2-i))
 		place.Increment()
 	}
 
@@ -37,18 +37,18 @@ func DeltaDeserialize(changes []byte) []CanvasDelta {
 func deltaDeseralizeSingle(changes []byte, place *BitCursor) CanvasDelta {
 	var delta = CanvasDelta{}
 	for i := 0; i < 12; i++ {
-		delta.y <<= 1
-		delta.y |= uint(changes[place.byteN] >> (7 - byte(place.bitN)))
+		delta.Y <<= 1
+		delta.Y |= uint(changes[place.byteN] >> (7 - byte(place.bitN)))
 		place.Increment()
 	}
 	for i := 0; i < 12; i++ {
-		delta.x <<= 1
-		delta.x |= uint(changes[place.byteN] >> (7 - byte(place.bitN)))
+		delta.X <<= 1
+		delta.X |= uint(changes[place.byteN] >> (7 - byte(place.bitN)))
 		place.Increment()
 	}
 	for i := 0; i < 3; i++ {
-		delta.color <<= 1
-		delta.color |= changes[place.byteN]>>7 - byte(place.bitN)
+		delta.Color <<= 1
+		delta.Color |= changes[place.byteN]>>7 - byte(place.bitN)
 		place.Increment()
 	}
 	return delta

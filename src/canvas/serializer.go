@@ -1,9 +1,9 @@
 package canvas
 
 type Canvas struct {
-	width  uint
-	height uint
-	pixels []byte
+	Width  uint
+	Height uint
+	Pixels []byte
 }
 type BitCursor struct {
 	byteN int
@@ -37,7 +37,7 @@ func Deserialize(data []byte) Canvas {
 	var height uint = (uint(data[0]) << 4) | uint(data[1]>>4)
 	var width uint = (uint(data[1]&0x0F) << 8) | uint(data[2])
 	var pixels []byte = make([]byte, height*width)
-
+	//fmt.Println("width: " + fmt.Sprint(width) + " " + "height:  " + fmt.Sprint(height))
 	var bitCount uint = width * height * 3
 
 	for i := uint(0); i < bitCount; i += 3 {
@@ -46,23 +46,23 @@ func Deserialize(data []byte) Canvas {
 			(data[(i+24+2)/8]>>((i+2)%8))&1
 	}
 
-	return Canvas{width: width, height: height, pixels: pixels}
+	return Canvas{Width: width, Height: height, Pixels: pixels}
 }
 
 func Serialize(canvas Canvas) []byte {
-	var bitsNeeded = canvas.height*canvas.width*3 + 24
+	var bitsNeeded = canvas.Height*canvas.Width*3 + 24
 	var output []byte = make([]byte, (bitsNeeded+7)/8)
-	output[0] = byte(canvas.height >> 4)
-	output[1] = byte(canvas.height&0b00001111)<<4 | byte(canvas.width>>4)
-	output[2] = byte(canvas.width&0b00001111) << 4
+	output[0] = byte(canvas.Height >> 4)
+	output[1] = byte(canvas.Height&0b00001111)<<4 | byte(canvas.Width>>8)
+	output[2] = byte(canvas.Width)
 	//for each pixel add 3 bit color code
 	var place BitCursor = BitCursor{byteN: 3, bitN: 0}
-	for i := 0; i < len(canvas.pixels); i++ {
-		output[place.byteN] = (output[place.byteN] << 1) | (canvas.pixels[i] >> 2)
+	for i := 0; i < len(canvas.Pixels); i++ {
+		output[place.byteN] = (output[place.byteN] << 1) | (canvas.Pixels[i] >> 2)
 		place.Increment()
-		output[place.byteN] = (output[place.byteN] << 1) | (canvas.pixels[i] >> 1)
+		output[place.byteN] = (output[place.byteN] << 1) | (canvas.Pixels[i] >> 1)
 		place.Increment()
-		output[place.byteN] = (output[place.byteN] << 1) | (canvas.pixels[i])
+		output[place.byteN] = (output[place.byteN] << 1) | (canvas.Pixels[i])
 		place.Increment()
 	}
 	return output
