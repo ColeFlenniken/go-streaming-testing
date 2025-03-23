@@ -9,10 +9,11 @@ import (
 // TODO merge canvas and Managed Canvas. Build perhaps using an interface. This will allow managed canvas to has a array of pixels
 // with associated timestamps that helps on sync. Note this should not get serialized (unless specs change) as the times are just server side
 type ManagedCanvas struct {
-	canvas Canvas
-	m      sync.Mutex
-	ts     time.Time
-	id     int
+	canvas    Canvas
+	m         sync.Mutex
+	Ts        time.Time
+	Id        int
+	ChangeLog ChangeList
 }
 
 type Canvas struct {
@@ -28,8 +29,9 @@ type CanvasDelta struct {
 }
 
 type ChangeList struct {
-	changes []CanvasDelta
-	ts      time.Time
+	Deltas    []CanvasDelta
+	ChangeIds []int
+	Start     int
 }
 
 func NewCanvas(height uint, width uint) (Canvas, error) {
@@ -39,10 +41,10 @@ func NewCanvas(height uint, width uint) (Canvas, error) {
 	return Canvas{Height: height, Width: width, Pixels: make([]byte, height*width)}, nil
 }
 
-func (mCanvas *ManagedCanvas) Update(deltas []CanvasDelta) error {
+func (mCanvas *ManagedCanvas) Update(changes ChangeList) error {
 	mCanvas.m.Lock()
 	defer mCanvas.m.Unlock()
-
+	deltas := changes.Deltas
 	if deltas == nil {
 		return fmt.Errorf("deltas cannot be nil")
 	}
@@ -68,7 +70,7 @@ func (mCanvas *ManagedCanvas) Update(deltas []CanvasDelta) error {
 	for i := 0; i < len; i++ {
 		canvas.Pixels[canvas.Width*deltas[i].Y+deltas[i].X] = deltas[i].Color
 	}
-	mCanvas.ts = time.Now()
+	mCanvas.Ts = time.Now()
 	return nil
 }
 
@@ -78,7 +80,15 @@ func (mCanvas *ManagedCanvas) GetCanvas() Canvas {
 	return mCanvas.canvas
 }
 
-func (mCanvas *ManagedCanvas) GetChanges(ts time.Time) []ChangeList {
-	//need to binary search the circular array. We can assume most recent is most recently seen. What issues can this cause? rare cases may be an issue but extremely rare. will need to look after 1.0 works
-	//need to choose to flatten each Canvas delta list or not. Probably flatten
+func (mCanvas *ManagedCanvas) GetChanges(MRChangeId int) []CanvasDelta {
+	mCanvas.m.Lock()
+	defer mCanvas.m.Unlock()
+	changes := mCanvas.ChangeLog
+	//swap out to binary search eventually
+	for i := 0; i < len(changes.Deltas); i++ {
+		if MRChangeId < changes.ChangeIds[i] {
+			return changes.Deltas[i:]
+		}
+	}
+	return []CanvasDelta{}
 }
