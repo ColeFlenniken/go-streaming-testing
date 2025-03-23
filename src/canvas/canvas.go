@@ -2,6 +2,7 @@ package canvas
 
 import (
 	"fmt"
+	"sync"
 	"time"
 )
 
@@ -9,6 +10,7 @@ import (
 // with associated timestamps that helps on sync. Note this should not get serialized (unless specs change) as the times are just server side
 type ManagedCanvas struct {
 	canvas Canvas
+	m      sync.Mutex
 	ts     time.Time
 	id     int
 }
@@ -33,6 +35,9 @@ func NewCanvas(height uint, width uint) (Canvas, error) {
 }
 
 func (mCanvas *ManagedCanvas) Update(deltas []CanvasDelta) error {
+	mCanvas.m.Lock()
+	defer mCanvas.m.Unlock()
+
 	if deltas == nil {
 		return fmt.Errorf("deltas cannot be nil")
 	}
@@ -63,5 +68,7 @@ func (mCanvas *ManagedCanvas) Update(deltas []CanvasDelta) error {
 }
 
 func (mCanvas *ManagedCanvas) Get() Canvas {
+	mCanvas.m.Lock()
+	defer mCanvas.m.Unlock()
 	return mCanvas.canvas
 }
