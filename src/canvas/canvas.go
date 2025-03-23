@@ -27,6 +27,11 @@ type CanvasDelta struct {
 	Color byte
 }
 
+type ChangeList struct {
+	changes []CanvasDelta
+	ts      time.Time
+}
+
 func NewCanvas(height uint, width uint) (Canvas, error) {
 	if height > 1<<12 || width > 1<<12 {
 		return Canvas{}, fmt.Errorf("invalid creation dimensions: height and width may be 4096 at maximum")
@@ -67,8 +72,13 @@ func (mCanvas *ManagedCanvas) Update(deltas []CanvasDelta) error {
 	return nil
 }
 
-func (mCanvas *ManagedCanvas) Get() Canvas {
+func (mCanvas *ManagedCanvas) GetCanvas() Canvas {
 	mCanvas.m.Lock()
 	defer mCanvas.m.Unlock()
 	return mCanvas.canvas
+}
+
+func (mCanvas *ManagedCanvas) GetChanges(ts time.Time) []ChangeList {
+	//need to binary search the circular array. We can assume most recent is most recently seen. What issues can this cause? rare cases may be an issue but extremely rare. will need to look after 1.0 works
+	//need to choose to flatten each Canvas delta list or not. Probably flatten
 }
