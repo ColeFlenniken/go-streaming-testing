@@ -31,7 +31,6 @@ type CanvasDelta struct {
 type ChangeList struct {
 	Deltas    []CanvasDelta
 	ChangeIds []int
-	Start     int
 }
 
 func NewCanvas(height uint, width uint) (Canvas, error) {
@@ -41,10 +40,10 @@ func NewCanvas(height uint, width uint) (Canvas, error) {
 	return Canvas{Height: height, Width: width, Pixels: make([]byte, height*width)}, nil
 }
 
-func (mCanvas *ManagedCanvas) Update(changes ChangeList) error {
+func (mCanvas *ManagedCanvas) Update(deltas []CanvasDelta) error {
 	mCanvas.m.Lock()
 	defer mCanvas.m.Unlock()
-	deltas := changes.Deltas
+
 	if deltas == nil {
 		return fmt.Errorf("deltas cannot be nil")
 	}
@@ -70,6 +69,7 @@ func (mCanvas *ManagedCanvas) Update(changes ChangeList) error {
 	for i := 0; i < len; i++ {
 		canvas.Pixels[canvas.Width*deltas[i].Y+deltas[i].X] = deltas[i].Color
 	}
+	mCanvas.ChangeLog.Deltas = append(mCanvas.ChangeLog.Deltas, deltas...)
 	mCanvas.Ts = time.Now()
 	return nil
 }
