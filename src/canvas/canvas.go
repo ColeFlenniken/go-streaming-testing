@@ -40,7 +40,12 @@ func (mCanvas *ManagedCanvas) GetChanges(MRChangeId int) ([]CanvasDelta, error) 
 	defer mCanvas.m.Unlock()
 	changes := mCanvas.ChangeLog
 	if changes.start > MRChangeId {
-		return []CanvasDelta{}, fmt.Errorf("change id is older than delta log contains. N")
+		return []CanvasDelta{}, fmt.Errorf("change id is older than delta log contains.")
+	}
+	var ndx = mCanvas.ChangeLog.start + (MRChangeId - mCanvas.ChangeLog.ChangeIds[mCanvas.ChangeLog.start])
+	var output []CanvasDelta = []CanvasDelta{}
+	for ndx != mCanvas.ChangeLog.end {
+		output = append(output, mCanvas.ChangeLog.Deltas[ndx])
 	}
 
 	return []CanvasDelta{}, nil
