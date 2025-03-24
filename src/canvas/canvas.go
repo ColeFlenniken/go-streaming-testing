@@ -31,6 +31,19 @@ type CanvasDelta struct {
 type ChangeList struct {
 	Deltas    []CanvasDelta
 	ChangeIds []int
+	start     int
+	end       int
+}
+
+func (mCanvas *ManagedCanvas) GetChanges(MRChangeId int) ([]CanvasDelta, error) {
+	mCanvas.m.Lock()
+	defer mCanvas.m.Unlock()
+	changes := mCanvas.ChangeLog
+	if changes.start > MRChangeId {
+		return []CanvasDelta{}, fmt.Errorf("change id is older than delta log contains. N")
+	}
+
+	return []CanvasDelta{}, nil
 }
 
 func NewCanvas(height uint, width uint) (Canvas, error) {
@@ -69,6 +82,7 @@ func (mCanvas *ManagedCanvas) Update(deltas []CanvasDelta) error {
 	for i := 0; i < len; i++ {
 		canvas.Pixels[canvas.Width*deltas[i].Y+deltas[i].X] = deltas[i].Color
 	}
+	//TODO look at changing this
 	mCanvas.ChangeLog.Deltas = append(mCanvas.ChangeLog.Deltas, deltas...)
 	mCanvas.Ts = time.Now()
 	return nil
@@ -78,17 +92,4 @@ func (mCanvas *ManagedCanvas) GetCanvas() Canvas {
 	mCanvas.m.Lock()
 	defer mCanvas.m.Unlock()
 	return mCanvas.canvas
-}
-
-func (mCanvas *ManagedCanvas) GetChanges(MRChangeId int) []CanvasDelta {
-	mCanvas.m.Lock()
-	defer mCanvas.m.Unlock()
-	changes := mCanvas.ChangeLog
-	//swap out to binary search eventually
-	for i := 0; i < len(changes.Deltas); i++ {
-		if MRChangeId < changes.ChangeIds[i] {
-			return changes.Deltas[i:]
-		}
-	}
-	return []CanvasDelta{}
 }
