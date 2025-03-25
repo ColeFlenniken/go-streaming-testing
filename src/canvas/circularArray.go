@@ -45,10 +45,13 @@ func (arr *CircularArray) Append(delta CanvasDelta) {
 }
 
 // for testing only
-func (arr *CircularArray) Print() {
+func (arr *CircularArray) Print() string {
 	var strBuilder strings.Builder = strings.Builder{}
-	for i := 0; i < arr.len; i++ {
-		strBuilder.WriteString(fmt.Sprintf("%v,", arr.Deltas[(i+arr.start)%len(arr.Deltas)]))
+	strBuilder.WriteString(fmt.Sprintf("size %v,", arr.len))
+	strBuilder.WriteString(fmt.Sprintf("start %v,", arr.start))
+	for i := 0; i < len(arr.Deltas); i++ {
+		strBuilder.WriteString(fmt.Sprintf("%v,", arr.Deltas[(i)%len(arr.Deltas)]))
 	}
 	fmt.Println(strBuilder.String())
+	return strBuilder.String()
 }
