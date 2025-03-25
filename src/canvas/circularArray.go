@@ -21,12 +21,14 @@ func (arr *CircularArray) GetChanges(MRChangeId int) ([]CanvasDelta, error) {
 	if arr.startChangeid > MRChangeId {
 		return []CanvasDelta{}, fmt.Errorf("last update too old. Need to get the full canvas")
 	}
-	var outputStart int = arr.start + (MRChangeId - arr.startChangeid)
+	var outputStart int = (arr.start + (MRChangeId - arr.startChangeid)) % len(arr.Deltas)
 	if len(arr.Deltas)-outputStart >= arr.len {
 		return arr.Deltas[outputStart : outputStart+arr.len+1], nil
 	}
+	fmt.Printf("\n\n%v\n\n", len(arr.Deltas)-outputStart)
 	var output []CanvasDelta = arr.Deltas[outputStart:]
-	var leftover int = arr.len - (len(arr.Deltas) - outputStart)
+	//this calc is wrong
+	var leftover int = arr.len - outputStart - (len(arr.Deltas) - outputStart)
 	output = append(output, arr.Deltas[0:leftover]...)
 	return output, nil
 }
