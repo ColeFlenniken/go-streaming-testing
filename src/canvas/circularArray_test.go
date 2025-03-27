@@ -43,5 +43,5 @@ func TestArraySlice(t *testing.T) {
 	array.Append(canvas.CanvasDelta{X: 6})
 	array.Append(canvas.CanvasDelta{X: 7})
 	array.Print()
-	fmt.Println(array.GetChanges(5))
+	fmt.Println(array.GetChanges(2))
 }
