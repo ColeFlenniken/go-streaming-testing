@@ -22,16 +22,12 @@ func (arr *CircularArray) GetChanges(MRChangeId int) ([]CanvasDelta, error) {
 	if arr.startChangeid > MRChangeId+1 {
 		return []CanvasDelta{}, fmt.Errorf("last update too old. Need to get the full canvas")
 	}
-	var leftover = arr.len - (MRChangeId - arr.startChangeid)
-	var outputStart int = (arr.start + (MRChangeId - arr.startChangeid)) % len(arr.Deltas)
-
-	if len(arr.Deltas)-outputStart <= arr.len {
-		return arr.Deltas[outputStart:arr.end], nil
-	}
-	var output []CanvasDelta = arr.Deltas[outputStart:]
-	leftover -= len(output)
-	if leftover > 0 {
-		output = append(output, arr.Deltas[0:leftover]...)
+	var outputLen = arr.len - (MRChangeId - arr.startChangeid + 1)
+	fmt.Printf("outlen: %v\n", outputLen)
+	var outputStart int = (arr.start + (MRChangeId - arr.startChangeid + 1)) % len(arr.Deltas)
+	var output []CanvasDelta = make([]CanvasDelta, outputLen)
+	for i := 0; i < outputLen; i++ {
+		output[i] = arr.Deltas[(outputStart+i)%len(arr.Deltas)]
 	}
 	return output, nil
 }
