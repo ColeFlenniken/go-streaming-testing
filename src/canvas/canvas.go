@@ -28,6 +28,7 @@ type CanvasDelta struct {
 	Color byte
 }
 
+// need to use something other than errors as  control flow.Alsoo need to make sure to add a type to response to let client know what type of data they are receiving
 func (mCanvas *ManagedCanvas) GetChanges(MRChangeId int) ([]CanvasDelta, error) {
 	mCanvas.m.Lock()
 	defer mCanvas.m.Unlock()
