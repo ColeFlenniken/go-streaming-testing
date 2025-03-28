@@ -5,11 +5,12 @@ import (
 	"strings"
 )
 
+// start refers to the start index while startChangeid refers to the change id of the element at the start index. Since
+// changeIds increment by 1, all change ids in the list can be inferred by knowing the start
 type CircularArray struct {
 	Deltas        []CanvasDelta
 	startChangeid int
 	start         int
-	end           int
 	len           int
 }
 
@@ -38,14 +39,16 @@ func (arr *CircularArray) Append(delta CanvasDelta) {
 	if arr.len < len(arr.Deltas) {
 		arr.Deltas[arr.start+arr.len] = delta
 		arr.len++
-		arr.end = arr.start + arr.len + 1
 		return
 	}
 	//wraparound case
 	arr.Deltas[arr.start] = delta
 	arr.startChangeid++
 	arr.start = (arr.start + 1) % len(arr.Deltas)
-	arr.end = arr.start
+}
+
+func (arr *CircularArray) GetLatestChangeId() int {
+	return arr.start + arr.len - 1
 }
 
 // for testing only

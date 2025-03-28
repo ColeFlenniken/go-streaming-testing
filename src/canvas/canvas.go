@@ -13,7 +13,7 @@ type ManagedCanvas struct {
 	m         sync.Mutex
 	Ts        time.Time
 	Id        int
-	ChangeLog ChangeList
+	ChangeLog CircularArray
 }
 
 type Canvas struct {
@@ -28,26 +28,13 @@ type CanvasDelta struct {
 	Color byte
 }
 
-type ChangeList struct {
-	Deltas    []CanvasDelta
-	ChangeIds []int
-	start     int
-	end       int
-}
-
 func (mCanvas *ManagedCanvas) GetChanges(MRChangeId int) ([]CanvasDelta, error) {
 	mCanvas.m.Lock()
 	defer mCanvas.m.Unlock()
-	changes := mCanvas.ChangeLog
-	if changes.start > MRChangeId {
-		return []CanvasDelta{}, fmt.Errorf("change id is older than delta log contains")
+	output, err := mCanvas.ChangeLog.GetChanges(MRChangeId)
+	if err != nil {
+		return nil, fmt.Errorf("UNIMPLEMENTED: NEED TO GET FULL CANVAS")
 	}
-	var ndx = mCanvas.ChangeLog.start + (MRChangeId - mCanvas.ChangeLog.ChangeIds[mCanvas.ChangeLog.start])
-	var output []CanvasDelta = []CanvasDelta{}
-	for ndx != mCanvas.ChangeLog.end {
-		output = append(output, mCanvas.ChangeLog.Deltas[ndx])
-	}
-
 	return output, nil
 }
 
@@ -71,8 +58,8 @@ func (mCanvas *ManagedCanvas) Update(deltas []CanvasDelta) error {
 		return fmt.Errorf("invalid canvas dimensions: got %d pixels, expected %d",
 			len(canvas.Pixels), expectedPixels)
 	}
-	var len = len(deltas)
-	for i := 0; i < len; i++ {
+	var length = len(deltas)
+	for i := 0; i < length; i++ {
 		if deltas[i].Y >= canvas.Height {
 			return fmt.Errorf("y value of delta out of bounds. Height of Canvas is %v, while the Y of the delta of index %v is %v", canvas.Height, i, deltas[i].Y)
 		}
@@ -84,11 +71,10 @@ func (mCanvas *ManagedCanvas) Update(deltas []CanvasDelta) error {
 		}
 	}
 	//seperate loop is a convinience that prevents rollback logic. Can be changed later for improved efficiency assuming rate if bounds errors is low
-	for i := 0; i < len; i++ {
+	for i := 0; i < length; i++ {
 		canvas.Pixels[canvas.Width*deltas[i].Y+deltas[i].X] = deltas[i].Color
+		mCanvas.ChangeLog.Append(deltas[i])
 	}
-	//TODO look at changing this
-	mCanvas.ChangeLog.Deltas = append(mCanvas.ChangeLog.Deltas, deltas...)
 	mCanvas.Ts = time.Now()
 	return nil
 }

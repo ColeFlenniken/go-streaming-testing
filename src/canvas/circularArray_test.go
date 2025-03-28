@@ -49,7 +49,7 @@ func TestArraySlice(t *testing.T) {
 	if err != nil {
 		t.FailNow()
 	}
-	if !cmp.Equal(changes, []canvas.CanvasDelta{canvas.CanvasDelta{X: 2}, canvas.CanvasDelta{X: 3}, canvas.CanvasDelta{X: 4}, canvas.CanvasDelta{X: 5}}) {
+	if !cmp.Equal(changes, []canvas.CanvasDelta{{X: 2}, {X: 3}, {X: 4}, {X: 5}}) {
 		fmt.Print(changes)
 		t.FailNow()
 	}
