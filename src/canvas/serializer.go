@@ -33,7 +33,6 @@ func Deserialize(data []byte) Canvas {
 	var height uint = (uint(data[0]) << 4) | uint(data[1]>>4)
 	var width uint = (uint(data[1]&0x0F) << 8) | uint(data[2])
 	var pixels []byte = make([]byte, height*width)
-	//fmt.Println("width: " + fmt.Sprint(width) + " " + "height:  " + fmt.Sprint(height))
 	var place BitCursor = BitCursor{byteN: 3, bitN: 0}
 	for i := 0; i < len(pixels); i++ {
 		pixels[i] = (data[place.byteN] >> (7 - place.bitN)) & 1 << 2

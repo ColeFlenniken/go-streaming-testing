@@ -80,6 +80,110 @@ window.addEventListener('load', async ()=>{
     document.addEventListener('mousemove', sketch); 
 }); 
 
+function deltaSerialize(changes) {
+    const numChanges = changes.length;
+    const output = new Array(3 + Math.ceil((27 * numChanges + 7) / 8)).fill(0);
+    output[0] = numChanges >> 16;
+    output[1] = numChanges >> 8;
+    output[2] = numChanges;
+    let place = { byteN: 3, bitN: 0 };
+
+    for (let i = 0; i < numChanges; i++) {
+        packDelta(output, place, changes[i]);
+    }
+
+    return output;
+}
+
+function packDelta(buff, place, delta) {
+    for (let i = 0; i < 12; i++) {
+        buff[place.byteN] = (buff[place.byteN] << 1) | ((delta.Y >> (11 - i)) & 1);
+        increment(place);
+    }
+    for (let i = 0; i < 12; i++) {
+        buff[place.byteN] = (buff[place.byteN] << 1) | ((delta.X >> (11 - i)) & 1);
+        increment(place);
+    }
+    for (let i = 0; i < 3; i++) {
+        buff[place.byteN] = (buff[place.byteN] << 1) | ((delta.Color >> (2 - i)) & 1);
+        increment(place);
+    }
+
+    if (place.bitN !== 0) {
+        buff[buff.length - 1] <<= 8 - place.bitN;
+    }
+}
+
+ 
+function sendData(){
+
+}
+function deltaDeserializeSingle(changes, place) {
+    const delta = { Y: 0, X: 0, Color: 0 };
+
+    for (let i = 0; i < 12; i++) {
+        delta.Y <<= 1;
+        delta.Y |= (changes[place.byteN] >> (7 - place.bitN)) & 1;
+        increment(place);
+    }
+    for (let i = 0; i < 12; i++) {
+        delta.X <<= 1;
+        delta.X |= (changes[place.byteN] >> (7 - place.bitN)) & 1;
+        increment(place);
+    }
+    for (let i = 0; i < 3; i++) {
+        delta.Color <<= 1;
+        delta.Color |= (changes[place.byteN] >> (7 - place.bitN)) & 1;
+        increment(place);
+    }
+
+    return delta;
+}
+
+function increment(place) {
+    place.bitN++;
+    if (place.bitN === 8) {
+        place.bitN = 0;
+        place.byteN++;
+    }
+}
+
+function deltaDeserialize(changes) {
+    const numChanges = (changes[0] << 16) | (changes[1] << 8) | changes[2];
+    const output = new Array(numChanges);
+    let place = { byteN: 3, bitN: 0 };
+    for (let i = 0; i < numChanges; i++) {
+        output[i] = deltaDeserializeSingle(changes, place);
+    }
+    return output;
+}
+
+function deserializeCanvas(data) {
+    const height = (data[0] << 4) | (data[1] >> 4);
+    const width = ((data[1] & 0x0F) << 8) | data[2];
+    const pixels = new Array(height * width);
+    let place = { byteN: 3, bitN: 0 };
+ 
+    for (let i = 0; i < pixels.length; i++) {
+        pixels[i] = ((data[place.byteN] >> (7 - place.bitN)) & 1) << 2;
+        increment();
+        pixels[i] |= ((data[place.byteN] >> (7 - place.bitN)) & 1) << 1;
+        increment();
+        pixels[i] |= (data[place.byteN] >> (7 - place.bitN)) & 1;
+        increment();
+    }
+
+    return { width: width, height: height, pixels: pixels };
+}
+
+function updateData(ctx){
+    //http req to get the changes
+    if(data.type == "delta"){
+
+    }else{
+        //recall the onstart grabcanvas function
+    }
+}
 
     </script>
 }
