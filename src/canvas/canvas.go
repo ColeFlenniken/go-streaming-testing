@@ -9,8 +9,8 @@ import (
 // TODO merge canvas and Managed Canvas. Build perhaps using an interface. This will allow managed canvas to has a array of pixels
 // with associated timestamps that helps on sync. Note this should not get serialized (unless specs change) as the times are just server side
 type ManagedCanvas struct {
-	canvas    Canvas
-	m         sync.Mutex
+	Canvas    Canvas
+	M         sync.Mutex
 	Ts        time.Time
 	Id        int
 	ChangeLog CircularArray
@@ -30,8 +30,8 @@ type CanvasDelta struct {
 
 // need to use something other than errors as  control flow.Alsoo need to make sure to add a type to response to let client know what type of data they are receiving
 func (mCanvas *ManagedCanvas) GetChanges(MRChangeId int) ([]CanvasDelta, error) {
-	mCanvas.m.Lock()
-	defer mCanvas.m.Unlock()
+	mCanvas.M.Lock()
+	defer mCanvas.M.Unlock()
 	output, err := mCanvas.ChangeLog.GetChanges(MRChangeId)
 	if err != nil {
 		return nil, fmt.Errorf("UNIMPLEMENTED: NEED TO GET FULL CANVAS")
@@ -47,13 +47,13 @@ func NewCanvas(height uint, width uint) (Canvas, error) {
 }
 
 func (mCanvas *ManagedCanvas) Update(deltas []CanvasDelta) error {
-	mCanvas.m.Lock()
-	defer mCanvas.m.Unlock()
+	mCanvas.M.Lock()
+	defer mCanvas.M.Unlock()
 
 	if deltas == nil {
 		return fmt.Errorf("deltas cannot be nil")
 	}
-	var canvas = mCanvas.canvas
+	var canvas = mCanvas.Canvas
 	expectedPixels := int(canvas.Height * canvas.Width)
 	if len(canvas.Pixels) != expectedPixels {
 		return fmt.Errorf("invalid canvas dimensions: got %d pixels, expected %d",
@@ -81,7 +81,7 @@ func (mCanvas *ManagedCanvas) Update(deltas []CanvasDelta) error {
 }
 
 func (mCanvas *ManagedCanvas) GetCanvas() Canvas {
-	mCanvas.m.Lock()
-	defer mCanvas.m.Unlock()
-	return mCanvas.canvas
+	mCanvas.M.Lock()
+	defer mCanvas.M.Unlock()
+	return mCanvas.Canvas
 }
