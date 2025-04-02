@@ -24,6 +24,8 @@ var mCanvas canvas.ManagedCanvas
 
 func updateData(w http.ResponseWriter, r *http.Request) {
 	body, err := io.ReadAll(r.Body)
+	//for testing
+	println(body)
 	if err != nil {
 		log.Fatal("issue reading from body")
 	}
@@ -34,6 +36,8 @@ func updateData(w http.ResponseWriter, r *http.Request) {
 
 func getData(w http.ResponseWriter, r *http.Request) {
 	body, err := io.ReadAll(r.Body)
+	//for testing
+	println(body)
 	if err != nil {
 		log.Fatal("issue reading from body")
 	}
@@ -70,7 +74,7 @@ func main() {
 	mux.HandleFunc("/update", updateData)
 	mux.HandleFunc("/getData", getData)
 	mux.Handle("/", templ.Handler(component))
-
+	mux.Handle("/scripts/", http.StripPrefix("/scripts/", http.FileServer(http.Dir("./scripts"))))
 	err = http.ListenAndServe(":3333", mux)
 	if err != nil {
 		log.Fatal(err)
