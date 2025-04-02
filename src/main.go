@@ -1,6 +1,7 @@
 package main
 
 import (
+	"encoding/json"
 	"io"
 	"log"
 	"net/http"
@@ -12,6 +13,12 @@ import (
 	"github.com/go-streaming-testing/src/canvas"
 )
 
+// aka if a full canvas or a delta array is returned
+type changeData struct {
+	kind string
+	data []byte
+}
+
 // shared state
 var mCanvas canvas.ManagedCanvas
 
@@ -20,7 +27,8 @@ func updateData(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		log.Fatal("issue reading from body")
 	}
-	var deser []canvas.CanvasDelta = canvas.DeltaDeserialize(body)
+	var deser []canvas.CanvasDelta
+	json.Unmarshal(body, &deser)
 	mCanvas.Update(deser)
 }
 
@@ -33,13 +41,21 @@ func getData(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		log.Fatal(err)
 	}
-	deltas, err := mCanvas.GetChanges(changeId)
-	if err != nil {
-		canvasFull := canvas.Serialize(mCanvas.GetCanvas())
-		w.Write(append([]byte{byte(0)}, canvasFull...))
+	deltas, canvas := mCanvas.GetChanges(changeId)
+	var kind string = "deltas"
+	if deltas == nil {
+		kind = "canvas"
 	}
-	canvasDeltas := canvas.DeltaSerialize(deltas)
-	w.Write(append([]byte{1}, canvasDeltas...))
+	data, err := json.Marshal(canvas)
+	if err != nil {
+		log.Fatal(err)
+	}
+	fullcanvas := changeData{kind: kind, data: data}
+	output, err := json.Marshal(fullcanvas)
+	if err != nil {
+		log.Fatal(err)
+	}
+	w.Write(output)
 }
 func main() {
 	canvasData, err := canvas.NewCanvas(500, 500)

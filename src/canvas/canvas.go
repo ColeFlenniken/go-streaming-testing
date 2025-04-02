@@ -17,26 +17,26 @@ type ManagedCanvas struct {
 }
 
 type Canvas struct {
-	Width  uint
-	Height uint
-	Pixels []byte
+	Width  uint   `json:"width"`
+	Height uint   `json:"height"`
+	Pixels []byte `json:"pixels"`
 }
 
 type CanvasDelta struct {
-	X     uint
-	Y     uint
-	Color byte
+	X     uint `json:"x"`
+	Y     uint `json:"y"`
+	Color byte `json:"color"`
 }
 
 // need to use something other than errors as  control flow.Alsoo need to make sure to add a type to response to let client know what type of data they are receiving
-func (mCanvas *ManagedCanvas) GetChanges(MRChangeId int) ([]CanvasDelta, error) {
+func (mCanvas *ManagedCanvas) GetChanges(MRChangeId int) ([]CanvasDelta, Canvas) {
 	mCanvas.M.Lock()
 	defer mCanvas.M.Unlock()
 	output, err := mCanvas.ChangeLog.GetChanges(MRChangeId)
 	if err != nil {
-		return nil, fmt.Errorf("UNIMPLEMENTED: NEED TO GET FULL CANVAS")
+		return nil, mCanvas.Canvas
 	}
-	return output, nil
+	return output, Canvas{}
 }
 
 func NewCanvas(height uint, width uint) (Canvas, error) {
