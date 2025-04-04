@@ -22,6 +22,7 @@ const colorBar = document.getElementById("colorBar");
 const canvas = document.getElementById("myCanvas");
 const ctx = canvas.getContext("2d");
 var oldCanvas = ctx.getImageData(0, 0, canvas.width, canvas.height);
+
 // Initialize default strokeStyle
 ctx.strokeStyle = "black";
 
@@ -55,7 +56,7 @@ function startPainting(event){
 function stopPainting(){
     paint = false;
 }
-
+var latestChangeId = -1;
 function sketch(event){
     if (!paint) return;
     ctx.beginPath();
@@ -65,6 +66,8 @@ function sketch(event){
     getPosition(event);
     ctx.lineTo(coord.x , coord.y);
     ctx.stroke();
+    console.log("DS" + latestChangeId);
+    updateData(ctx,latestChangeId);
 }
 
 
@@ -92,21 +95,42 @@ function sendData(){
             deltas.push({x:(i/4)%1000,y:(i/4)/1000,color:matchingColor})
         }    
     }
+    
     fetch("/update", {
         method: "POST",
-        body: JSON.stringify(deltas),
+        body: JSON.stringify(deltas)
       });
 }
  
  
 
-function updateData(ctx){
-    //http req to get the changes
-    if(data.type == "delta"){
-
-    }else{
-        //recall the onstart grabcanvas function
+async function  updateData(ctx, changeId){
+    console.log("passed in" + changeId)
+    const response = await fetch("/getData",{
+        method: "POST",
+        body: changeId
+    });
+    if(!response.ok){
+        //TODO MAKE THIS A FULL REFRESH
+        return;
     }
-    //reset tracking
+    const list = JSON.parse(await response.text());
+    console.log("data is " + list);
     oldCanvas = ctx.getImageData(0, 0, canvas.width, canvas.height);
+    newCanvas = ctx.getImageData(0,0,canvas.width, canvas.height);
+    list.forEach((item) =>{
+        let ndx = item.y*1000 + item.x;
+        hex = colors[item.color].color.replace(/^#/, '');
+
+        // Parse the red, green, and blue components
+        const r = parseInt(hex.substring(0, 2), 16);
+        const g = parseInt(hex.substring(2, 4), 16);
+        const b = parseInt(hex.substring(4, 6), 16);
+        newCanvas[ndx] = r;
+        newCanvas[ndx*4+1] = g;
+        newCanvas[ndx*4+2] = b;
+        console.log("color: rgb" + r + " " + g + " " + b);
+
+    });
+    ctx.putImageData(newCanvas,0,0);
 }

@@ -15,8 +15,8 @@ import (
 
 // aka if a full canvas or a delta array is returned
 type changeData struct {
-	kind string
-	data []byte
+	Kind string `json:"kind"`
+	Data []byte `json:"data"`
 }
 
 // shared state
@@ -45,24 +45,22 @@ func getData(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		log.Fatal(err)
 	}
-	deltas, canvas := mCanvas.GetChanges(changeId)
-	var kind string = "deltas"
-	if deltas == nil {
-		kind = "canvas"
+	deltas, err := mCanvas.GetChanges(changeId)
+	if err != nil {
+		w.WriteHeader(400)
+		return
 	}
-	data, err := json.Marshal(canvas)
+	deltas = append(deltas, canvas.CanvasDelta{X: 30, Y: 20, Color: 3}, canvas.CanvasDelta{X: 31, Y: 20, Color: 3}, canvas.CanvasDelta{X: 32, Y: 20, Color: 3}, canvas.CanvasDelta{X: 33, Y: 20, Color: 3})
+	output, err := json.Marshal(deltas)
 	if err != nil {
 		log.Fatal(err)
 	}
-	fullcanvas := changeData{kind: kind, data: data}
-	output, err := json.Marshal(fullcanvas)
-	if err != nil {
-		log.Fatal(err)
-	}
+	println("data")
+	println("writing " + string(output))
 	w.Write(output)
 }
 func main() {
-	canvasData, err := canvas.NewCanvas(500, 500)
+	canvasData, err := canvas.NewCanvas(1000, 1000)
 	if err != nil {
 		log.Fatal(err)
 	}
