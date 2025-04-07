@@ -18,9 +18,9 @@ const colors = [
     {  name: 'Pink', color: '#FFC0CB' },
     {   name: 'White', color: '#FFFFFF' },
   ];
-const colorBar = document.getElementById("colorBar");
-const canvas = document.getElementById("myCanvas");
-const ctx = canvas.getContext("2d");
+var colorBar = document.getElementById("colorBar");
+var canvas = document.getElementById("myCanvas");
+var ctx = canvas.getContext("2d");
 var oldCanvas = ctx.getImageData(0, 0, canvas.width, canvas.height);
 
 // Initialize default strokeStyle
@@ -61,13 +61,11 @@ function sketch(event){
     if (!paint) return;
     ctx.beginPath();
     ctx.lineWidth = 2;
-    ctx.lineCap = 'round';
     ctx.moveTo(coord.x, coord.y);
     getPosition(event);
     ctx.lineTo(coord.x , coord.y);
     ctx.stroke();
-    console.log("DS" + latestChangeId);
-    updateData(ctx,latestChangeId);
+    //updateData(ctx,latestChangeId);
 }
 
 
@@ -78,24 +76,34 @@ window.addEventListener('load', async ()=>{
     document.addEventListener('mousedown', startPainting);
     document.addEventListener('mouseup', stopPainting);
     document.addEventListener('mousemove', sketch);
+    setInterval(sendData, 2000);
+    setInterval(updateData, 2000);
 });
 
 
 function sendData(){
-    currData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+    currData = ctx.getImageData(0, 0, canvas.width, canvas.height).data;
     deltas = [];
-    for (let i = 0; i < currData.data.length; i += 4) {
+    for (let i = 0; i < currData.length; i += 4) {
+        if(currData[i] != 0 || currData[i+1] != 0){
+            console.log("FOUND NON WHITE " + currData[i] + " " + currData[i+1] + " " + currData[i+2] + " " + currData[i+3] );
+        } 
         if(currData[i] != oldCanvas[i] || currData[i+1] != oldCanvas[i+1] ||currData[i+2] != oldCanvas[i+2] ||currData[i+3] != oldCanvas[i+3] ){
             let red = currData[i].toString(16).padStart(2, '0');
             let green =  currData[i+1].toString(16).padStart(2, '0');
             let blue = currData[i+2].toString(16).padStart(2, '0');
             
             let hexCode = `#${red}${green}${blue}`;
+            console.log("code" + hexCode);
             let matchingColor = colors.find(colorObj => colorObj.color === hexCode).name;
             deltas.push({x:(i/4)%1000,y:(i/4)/1000,color:matchingColor})
-        }    
+
+        } else{
+
+        }
     }
-    
+    console.log("sending " + deltas.length + " delts");
+    if(deltas.length == 0) return;
     fetch("/update", {
         method: "POST",
         body: JSON.stringify(deltas)
@@ -104,33 +112,35 @@ function sendData(){
  
  
 
-async function  updateData(ctx, changeId){
-    console.log("passed in" + changeId)
+async function  updateData(){
+    console.log("passed in" + latestChangeId)
     const response = await fetch("/getData",{
         method: "POST",
-        body: changeId
+        body: latestChangeId
     });
     if(!response.ok){
+        console.log("BADTHING");
         //TODO MAKE THIS A FULL REFRESH
         return;
     }
     const list = JSON.parse(await response.text());
     console.log("data is " + list);
-    oldCanvas = ctx.getImageData(0, 0, canvas.width, canvas.height);
+
     newCanvas = ctx.getImageData(0,0,canvas.width, canvas.height);
     list.forEach((item) =>{
         let ndx = item.y*1000 + item.x;
         hex = colors[item.color].color.replace(/^#/, '');
-
+ 
         // Parse the red, green, and blue components
         const r = parseInt(hex.substring(0, 2), 16);
         const g = parseInt(hex.substring(2, 4), 16);
         const b = parseInt(hex.substring(4, 6), 16);
-        newCanvas[ndx] = r;
-        newCanvas[ndx*4+1] = g;
-        newCanvas[ndx*4+2] = b;
+        newCanvas.data[ndx] = r;
+        newCanvas.data[ndx*4+1] = g;
+        newCanvas.data[ndx*4+2] = b;
         console.log("color: rgb" + r + " " + g + " " + b);
-
+        
     });
     ctx.putImageData(newCanvas,0,0);
+    oldCanvas = ctx.getImageData(0, 0, canvas.width, canvas.height).data;
 }

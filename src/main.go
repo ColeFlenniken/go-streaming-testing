@@ -31,6 +31,7 @@ func updateData(w http.ResponseWriter, r *http.Request) {
 	}
 	var deser []canvas.CanvasDelta
 	json.Unmarshal(body, &deser)
+	println("found num change deltas = " + string(len(deser)))
 	mCanvas.Update(deser)
 }
 
@@ -50,13 +51,11 @@ func getData(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(400)
 		return
 	}
-	deltas = append(deltas, canvas.CanvasDelta{X: 30, Y: 20, Color: 3}, canvas.CanvasDelta{X: 31, Y: 20, Color: 3}, canvas.CanvasDelta{X: 32, Y: 20, Color: 3}, canvas.CanvasDelta{X: 33, Y: 20, Color: 3})
+	deltas = append(deltas, canvas.CanvasDelta{X: 30, Y: 120, Color: 3}, canvas.CanvasDelta{X: 31, Y: 120, Color: 3}, canvas.CanvasDelta{X: 32, Y: 120, Color: 3}, canvas.CanvasDelta{X: 33, Y: 120, Color: 3})
 	output, err := json.Marshal(deltas)
 	if err != nil {
 		log.Fatal(err)
 	}
-	println("data")
-	println("writing " + string(output))
 	w.Write(output)
 }
 func main() {
