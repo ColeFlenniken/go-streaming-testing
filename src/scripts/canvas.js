@@ -119,12 +119,6 @@ function sendData(){
     for (let i = 0; i < currData.length; i += 4) {
         if(currData[i+3] == 0) continue;
         if(currData[i] != 0 || currData[i+1] != 0){
-            if(i%4 != 0){
-                console.log("PPPPPPPPPPPPPPPPPPPPPPPPPPPP");
-            }
-            if(currData[i+3] != 0 && currData[i+3] != 255){
-                console.log("GGGGGGGGGGGGGGG");
-            }
             console.log("FOUND NON WHITE " + currData[i] + " " + currData[i+1] + " " + currData[i+2] + " " + currData[i+3] );
         } 
         if(currData[i] != oldCanvas[i] || currData[i+1] != oldCanvas[i+1] ||currData[i+2] != oldCanvas[i+2] ||currData[i+3] != oldCanvas[i+3] ){
@@ -134,8 +128,10 @@ function sendData(){
             
             let hexCode = `#${red}${green}${blue}`;
             console.log("code" + hexCode);
-            let matchingColor = colors.find(colorObj => colorObj.color === hexCode).name;
-            deltas.push({x:(i/4)%1000,y:(i/4)/1000,color:matchingColor})
+            let matchingColor = colors.find(colorObj => colorObj.color === hexCode);
+            console.log("colro " + matchingColor.name);
+            //TODO black is not a color on server side
+            deltas.push({x:(i/4)%1000,y:(i/4)/1000,color:matchingColor.name})
 
         } else{
 

@@ -63,6 +63,8 @@ func (mCanvas *ManagedCanvas) Update(deltas []CanvasDelta) error {
 		if deltas[i].X >= canvas.Width {
 			return fmt.Errorf("x value of delta out of bounds. Width of Canvas is %v, while the Y of the delta of index %v is %v", canvas.Height, i, deltas[i].X)
 		}
+		//note based on this implementation. There are 8 colors but those colors are not defined on the server. Therefore
+		//the 8 colors are determined by frontent implementation
 		if deltas[i].Color >= 8 {
 			return fmt.Errorf("color value must be in the range 0-7")
 		}
