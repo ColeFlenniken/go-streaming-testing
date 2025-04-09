@@ -35,6 +35,11 @@ func updateData(w http.ResponseWriter, r *http.Request) {
 	mCanvas.Update(deser)
 }
 
+type dataReturn struct {
+	ChangeId int                  `json:"changId"`
+	Deltas   []canvas.CanvasDelta `json:"deltas"`
+}
+
 func getData(w http.ResponseWriter, r *http.Request) {
 	body, err := io.ReadAll(r.Body)
 	//for testing
@@ -52,7 +57,8 @@ func getData(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	deltas = append(deltas, canvas.CanvasDelta{X: 30, Y: 120, Color: 3}, canvas.CanvasDelta{X: 31, Y: 120, Color: 3}, canvas.CanvasDelta{X: 32, Y: 120, Color: 3}, canvas.CanvasDelta{X: 33, Y: 120, Color: 3})
-	output, err := json.Marshal(deltas)
+	dataOut := dataReturn{ChangeId: 4, Deltas: deltas}
+	output, err := json.Marshal(dataOut)
 	if err != nil {
 		log.Fatal(err)
 	}

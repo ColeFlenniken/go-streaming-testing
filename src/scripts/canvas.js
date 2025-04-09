@@ -131,7 +131,7 @@ function sendData(){
             let matchingColor = colors.find(colorObj => colorObj.color === hexCode);
             console.log("colro " + matchingColor.name);
             //TODO black is not a color on server side
-            deltas.push({x:(i/4)%1000,y:(i/4)/1000,color:matchingColor.name})
+            deltas.push({x:(i/4)%1000,y:parseInt((i/4)/1000),color:matchingColor.name})
 
         } else{
 
